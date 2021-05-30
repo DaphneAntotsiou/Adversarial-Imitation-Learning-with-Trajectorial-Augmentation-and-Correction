@@ -42,10 +42,10 @@ def none_or_str(value):
 
 def argsparser():
     parser = argparse.ArgumentParser("Tensorflow Implementation of DAugGI")
-    parser.add_argument('--env_id', help='environment ID', default='HalfCheetah-v2')
+    parser.add_argument('--env_id', help='environment ID', default='HalfCheetah_ext-v2')
     parser.add_argument('--seed', help='RNG seed', type=int, default=1)
 
-    parser.add_argument('--semi_path', type=str, default='data/door/augmented_trajectories.npz', help='the directory to the semi dataset')
+    parser.add_argument('--semi_path', type=str, default='data/HalfCheetah/augmented_trajectories.npz', help='the directory to the semi dataset')
 
     parser.add_argument('--checkpoint_dir', help='the directory to save model', default='dauggi/')
     parser.add_argument('--log_dir', help='the directory to save log file', default=None)
@@ -87,11 +87,9 @@ def argsparser():
     parser.add_argument('--timesteps_per_batch', help='total generator timesteps per batch', type=int, default=int(2 ** 14))  # total number regardless of threads
     parser.add_argument('--continue_checkpoint', help='directory of latest checkpoint to continue', type=none_or_str,
                         default=None)
-    parser.add_argument('--continue_il', help='directory of latest cat_dauggi checkpoint to continue', type=none_or_str,
+    parser.add_argument('--continue_il', help='directory of latest DAugGI checkpoint to continue', type=none_or_str,
                         default=None)
-    parser.add_argument('--expert_model', help='directory of latest retargeting checkpoint to continue', type=str,
-                        # default=None)
-                        default="gail/sigma_0.9/trpo_gail.semi.1e-03.3e-04.128.transition_limitation_3.HalfCheetah.g_step_3.d_step_1.policy_entcoeff_0.adversary_entcoeff_0.001.seed_1/hour005")
+    parser.add_argument('--expert_model', help='directory of expert CAT checkpoint', type=str)
 
     # binary filter for expert generator
     boolean_flag(parser, 'filter_expert', default=True, help='filter the dynamic experts using success binary filter or RL reward')

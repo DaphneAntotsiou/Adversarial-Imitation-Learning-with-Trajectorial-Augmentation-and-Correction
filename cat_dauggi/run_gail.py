@@ -39,25 +39,22 @@ def none_or_str(value):
 
 def argsparser():
     parser = argparse.ArgumentParser("Tensorflow Implementation of GAIL")
-    parser.add_argument('--env_id', help='environment ID', default='InvertedPendulum_ext-v2')
+    parser.add_argument('--env_id', help='environment ID', default='HalfCheetah_ext-v2')
     parser.add_argument('--seed', help='RNG seed', type=int, default=1)
-    parser.add_argument('--expert_path', type=str, default='data/HalfCheetah-v2/clean_trajectories_500_RL.npz')
+    parser.add_argument('--expert_path', type=str, default='data/HalfCheetah/trajectories.npz')
     # semi supervised CAT network
     boolean_flag(parser, 'semi', default=False, help='run semi-supervised network')
     parser.add_argument('--semi_path', type=str,
-                        default="data/HalfCheetah-v2/sigma_0.9/clean_aug_trajectories_400_0.9.npz")
+                        default="data/HalfCheetah/augmented_trajectories.npz")
     parser.add_argument('--semi_label', type=str, choices=['acs', 'hpe'], default='acs')
 
-    parser.add_argument('--checkpoint_dir', help='the directory to save model', default='gail/sigma_0.9/')
+    parser.add_argument('--checkpoint_dir', help='the directory to save model', default='gail/')
     parser.add_argument('--log_dir', help='the directory to save log file', default=None)
     parser.add_argument('--load_model_path', help='dir to load the trajectories for evaluation', type=str,
                         default=None)
     parser.add_argument('--task', type=str, choices=['train', 'evaluate', 'sample'], default='evaluate')
     boolean_flag(parser, 'eval_runs', default=False, help='evaluate all the checkpoints of a train run')
-    boolean_flag(parser, 'eval_sigma', default=False, help='evaluate sigma of a run')
     boolean_flag(parser, 'eval_cat', default=False, help='evaluate all the hours of a train run')
-    parser.add_argument('--hour_dir', type=none_or_str, help='dir with checkpoints of a run for sigma evaluation',
-                        default=None)
     # for evaluatation n
     boolean_flag(parser, 'stochastic_policy', default=True, help='use stochastic/deterministic policy to evaluate')
     boolean_flag(parser, 'save_sample', default=False, help='save the trajectories or not')
@@ -204,7 +201,6 @@ def main(args):
               freeze_d=args.freeze_d,
               )
     elif args.task == 'evaluate':
-        eval_csv = args.hour_dir    # for sigma evaluation
         dir_separation = True
 
         func_list = [env, policy_fn]
@@ -215,7 +211,7 @@ def main(args):
                      'save': args.save_sample,
                      'render': args.render,
                      'semi_dataset': semi_dataset,
-                     'network_prefix': 'retarget' if args.semi else 'cat_dauggi',
+                     'network_prefix': 'semi' if args.semi else 'il',
                      'add_noise': False}
 
         keyword = 'hour'
@@ -343,7 +339,7 @@ def runner(env, policy_func, load_model_path, timesteps_per_batch, number_trajs,
 
     # Setup network
     # ----------------------------------------
-    if network_prefix and network_prefix != 'cat_dauggi' and network_prefix != 'retarget':
+    if network_prefix and network_prefix != 'il' and network_prefix != 'semi':
         print("Invalid network name, terminating...")
         return None
 
@@ -531,7 +527,7 @@ def traj_1_generator(pi, env, horizon, stochastic, render, semi_dataset=None, or
             break
         else:
             if semi_dataset:
-                # is retargeting network - get the next frame full obs from the trajectory
+                # is semi network - get the next frame full obs from the trajectory
                 full_ob, done = semi_dataset.get_next_frame_full_ob(ob)
             else:
                 full_ob = ob
